@@ -1,6 +1,6 @@
 <template>
     <div class="box">
-        <div class="container" id="box" @click="handleFile">
+        <div class="container" id="box" @click="handleFile" @dragover.prevent="onDragover" @dragenter.prevent @drop.prevent="onDrop($event);$emit('update:file', files)">
             <input type="file" id="f" multiple class="input" :accept="_accept" @change="file" @input="$emit('update:file', files)" hidden>
 
             <template v-if="files.length > 0">
@@ -8,6 +8,7 @@
                     <div class="item" v-for="(item, i) of files" :key="i">
                         <div>
                             <span style="text-overflow: ellipsis;">{{item.name}}</span>
+                            <span style="text-overflow: ellipsis;">{{convertByte(item.size)}}</span>
                         </div>
                         <div>
                             <button @click="deleteFile($event, i)">eliminar</button>
@@ -83,6 +84,33 @@
                 files.value = [];
                 emit("update:file", files.value);
             }
+            const onDragover = (event)=>{
+                let drop = document.getElementById("box");
+                drop.classList.add('container-drop')
+            }
+            const onDrop = (event)=>{
+                let drop = document.getElementById("box");
+                if(event.dataTransfer.files.length > 0){
+                    for(let item of event.dataTransfer.files){
+                        let read = new FileReader();
+                        read.onload = (e)=>{
+                            files.value.push({
+                                name: item.name,
+                                type: item.type,
+                                size: item.size,
+                                origin: item,
+                                decode: e.target.result
+                            });    
+                        }
+                        read.onprogress = (e)=>{
+                            per.value = parseInt( (e.loaded*100)/e.total );
+                            // console.log(`${per.value}%`);
+                        }
+                        read.readAsDataURL(item)
+                    }
+                    drop.classList.remove('container-drop')
+                }
+            }
 
             return {
                 // var
@@ -90,12 +118,33 @@
                 files,
                 
                 // function
+                onDragover, 
+                onDrop,
                 handleFile,
                 file,
                 deleteFile,
-                eraseAll
+                eraseAll,
+
             }
         },
+        methods: {
+            convertByte(byte){
+                // 8 = byte
+                // 1024 = kb
+                // 1024kb = 1mega
+                // 16 586 900 -> megas
+                if(byte > (1000*10)){ // 1000 es igual a un kb
+                    let total = parseFloat(byte / 1024*10);
+                    return `${total} kb`
+                }else if( byte > (1000* 100) ){ // 1000 ^10 = 1 mega
+                    let total = parseFloat(byte / (1024 * 100));
+                    return `${total} mb`
+                }else if( byte > (1000*1000) ){ // 1000 ^ = 1 gb
+                    let total = parseFloat(byte / (1024 * 1000));
+                    return `${total} gb`
+                }
+            }
+        }
     }
 </script>
 
@@ -103,11 +152,18 @@
     .container{
         width: 100%;
         height: 10rem;
-        border: 3px solid;
-        border-style: dashed;
+        border: 3px solid rgba(72, 71, 71, 0.996);
+        /* border: 3px solid rgba(117, 117, 117, 0.797); */
+        border-style: dashed !important;
         cursor: pointer;
-        /* position: relative; */
+        /* box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2); */
     }
+    .container-drop{
+        border: 3px solid rgba(117, 117, 117, 0.797) !important;
+        box-shadow: 2px 2px 2px 1px rgba(0, 0, 0, 0.2) !important;
+        border-style: dashed !important;
+    }
+    
     .box{
         display: flex;
         flex-direction: column;
