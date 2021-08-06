@@ -1,6 +1,6 @@
 <template>
     <div style="text-align:center">Vue 3 Upload Files</div>
-    <FileField v-model:file="archivos" _accept="image/*"></FileField>
+    <FileField v-model:file="archivos" _accept="*"></FileField>
 </template>
 
 <script>
@@ -15,12 +15,12 @@ export default {
             archivos: []
         }
     },
-    // watch:{
-    //     archivos(val, old){
-    //         console.log("vigilante del aula"),
-    //         console.log(val);
-    //     }
-    // },
+    watch:{
+        archivos(val, old){
+            console.log("vigilante del aula"),
+            console.log(val);
+        }
+    },
     methods: {
         uploadFiles(){
             console.log(this.archivos)
